@@ -22,10 +22,9 @@ def frames_to_video(input_dir, output_path, fps=24):
     except subprocess.CalledProcessError as e:
         print("❌ Error while creating video:", e)
 
-def get_video():
-    frames_dir = "generated_frames"
+def get_video(input_dir):
     output_video = "videos/output.mp4"
-    frames_to_video(frames_dir, output_video, fps=24)
+    frames_to_video(input_dir, output_video, fps=24)
 
 if __name__ == "__main__":
     get_video()
