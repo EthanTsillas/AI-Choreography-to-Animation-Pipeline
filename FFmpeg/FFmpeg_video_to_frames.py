@@ -34,7 +34,6 @@ def extract_frames(video_path, num_frames):
     command = [
         "ffmpeg",
         "-i", video_path,
-        #"-vf", f"fps={fps}",  # if you want all the frames just remove this line -> "-vf", f"fps={fps}"
         output_pattern
     ]
 
@@ -62,15 +61,12 @@ def square_and_resize(input_dir, output_dir, size=768):
         w, h = img.size
 
         # CASE 1: Image is wider than it is tall (Landscape video frame)
-        # It likely already has black bars on the sides.
-        # We crop the center horizontally so the height dictates the square.
         if w > h:
             left = (w - h) // 2
             # Crop bounds: (left, top, right, bottom)
             img = img.crop((left, 0, left + h, h))
 
         # CASE 2: Image is taller than it is wide (True portrait)
-        # We add black bars to the left and right sides to make it a square.
         elif h > w:
             square_img = Image.new("RGB", (h, h), (0, 0, 0))
             upper_left_x = (h - w) // 2
@@ -78,9 +74,9 @@ def square_and_resize(input_dir, output_dir, size=768):
             square_img.paste(img, (upper_left_x, 0))
             img = square_img
             
-        # (If w == h, it is already a perfect square, so we do nothing here)
+        # If w == h, it is already a perfect square, so we do nothing here
 
-        # 3. Final resize
+
         # The image is now a perfect square bounding the exact top and bottom of the frame
         final_img = img.resize((size, size), Image.Resampling.LANCZOS)
         final_img.save(os.path.join(output_dir, file))
