@@ -6,18 +6,20 @@ from diffusers import (
     AutoencoderKL, 
     EulerDiscreteScheduler
 )
+from controlnet_aux import LineartDetector
 from PIL import Image
 from PIL import ImageFilter, ImageEnhance
 import os
 import numpy as np
 from FFmpeg.FFmpeg_video_to_frames import get_frames
 from FFmpeg.FFmpeg_frames_to_video import get_video
+from lineart import get_lineart
 from Openpose.Openpose import run_openpose
 
 Height = 768
 Width = 768
 
-
+'''
 # Remove any previous images
 for f in os.listdir("FFmpeg/FFmpeg Images"):
     os.remove(os.path.join("FFmpeg/FFmpeg Images", f))
@@ -27,11 +29,15 @@ for f in os.listdir("generated_frames"):
     os.remove(os.path.join("generated_frames", f))
 for f in os.listdir("upscaled_frames"):
     os.remove(os.path.join("upscaled_frames", f))
-    
+for f in os.listdir("lineart_frames"):
+    os.remove(os.path.join("lineart_frames", f))
+        
+
 # Extract poses
 get_frames("FFmpeg/videos/input.mp4")
 run_openpose()
-
+get_lineart()
+'''
 
 print(torch.cuda.get_device_properties(0).total_memory / 1024**3)
 print(torch.version.cuda)
@@ -57,7 +63,9 @@ adapter = MotionAdapter.from_pretrained("guoyww/animatediff-motion-adapter-v1-5-
 # Loading Controlnet
 controlnet = ControlNetModel.from_pretrained("lllyasviel/control_v11p_sd15_openpose", torch_dtype=dtype)
 
-
+lineart_controlnet = ControlNetModel.from_pretrained(
+    "lllyasviel/control_v11p_sd15_lineart", torch_dtype=dtype
+)
 
 # Using Marvel Diffuser model
 MARVEL_SAFETENSOR_PATH = "M4RV3LSDUNGEONSNEWV40COMICS_mD40.safetensors"
@@ -75,9 +83,9 @@ else:
 
 # AnimateDiff pipeline
 pipe = AnimateDiffControlNetPipeline.from_pretrained(
-    MARVEL_DIFFUSERS_PATH, 
-    controlnet=controlnet, 
-    motion_adapter=adapter, 
+    MARVEL_DIFFUSERS_PATH,
+    controlnet=[controlnet, lineart_controlnet],  # list of two
+    motion_adapter=adapter,
     torch_dtype=dtype
 )
 
@@ -108,7 +116,9 @@ pipe.vae.enable_tiling()
 
 # Load pose files
 pose_dir = "Openpose/results/"
+lineart_dir = "lineart_frames"
 pose_files = sorted([f for f in os.listdir(pose_dir) if f.startswith("pose_frame_")])
+lineart_files = sorted([f for f in os.listdir(lineart_dir)])
 total_poses = len(pose_files)
 print(f"Found {total_poses} pose images")
 
@@ -119,18 +129,28 @@ chunks = [pose_files[i:i+chunk_size] for i in range(0, how_many_frames_to_genera
 generator = torch.Generator(device=device).manual_seed(56461)
 frame_counter = 1
 for chunk_idx, chunk in enumerate(chunks):
-    print(f"Generating chunk {chunk_idx+1}/{len(chunks)} ({len(chunk)} frames)...")
-    conditioning_frames = [Image.open(os.path.join(pose_dir, f)).convert("RGB").resize((Width, Height)) for f in chunk]
+    pose_chunk = pose_files[chunk_idx*chunk_size : chunk_idx*chunk_size + chunk_size]
+    lineart_chunk = lineart_files[chunk_idx*chunk_size : chunk_idx*chunk_size + chunk_size]
+
+    conditioning_frames_pose = [
+        Image.open(os.path.join(pose_dir, f)).convert("RGB").resize((Width, Height)) 
+        for f in pose_chunk
+    ]
+    conditioning_frames_lineart = [
+        Image.open(os.path.join(lineart_dir, f)).convert("RGB").resize((Width, Height)) 
+        for f in lineart_chunk
+    ]
+
     output = pipe(
-        prompt=COMIC_PROMPT, 
-        negative_prompt=NEGATIVE_PROMPT, 
-        conditioning_frames=conditioning_frames,
-        num_frames=len(chunk), 
-        width=Width, 
-        height=Height, 
-        num_inference_steps=20, 
-        guidance_scale=8.0,             
-        controlnet_conditioning_scale=1.7,
+        prompt=COMIC_PROMPT,
+        negative_prompt=NEGATIVE_PROMPT,
+        conditioning_frames=[conditioning_frames_pose, conditioning_frames_lineart],
+        controlnet_conditioning_scale=[1.2, 0.4],  # pose strong, lineart moderate
+        num_frames=len(pose_chunk),
+        width=Width,
+        height=Height,
+        num_inference_steps=20,
+        guidance_scale=7.5,
         generator=generator
     )
     for frame in output.frames[0]:

@@ -17,7 +17,7 @@ Photo files
 *.safetensors
 *.pt
 *.txt
-sd_scripts/
+sd-scripts/
 
 __pycache__/
 marvels_dungeons_diffusers/
