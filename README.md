@@ -8,8 +8,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 ## Demo
 
-> Drop a GIF or short video clip here once you have output to show.  
-> Even a 3–4 second loop of the final animation will get 10x more attention than any description.
+![alt text](output.gif)
 
 ---
 
@@ -76,11 +75,10 @@ The trained LoRA is fused directly into the AnimateDiff pipeline before inferenc
 
 ```
 /
-├── main.py                        # Stage 3: AnimateDiff + ControlNet inference
+├── image_gen.py                   # Stage 3: AnimateDiff + ControlNet inference
+├── image_gen_lineart.py           # Stage 3: AnimateDiff + ControlNet inference + Lineart inference
 ├── upscaler.py                    # Stage 5: Video-to-video upscale pass
 ├── background_remover.py          # Stage 4: BiRefNet background removal
-├── train.py                       # LoRA training — BLIP captioning
-├── run_train.py                   # LoRA training — kohya_ss launcher
 │
 ├── FFmpeg/
 │   ├── FFmpeg_video_to_frames.py  # Stage 1: Frame extraction + preprocessing
@@ -91,9 +89,11 @@ The trained LoRA is fused directly into the AnimateDiff pipeline before inferenc
 ├── Openpose/
 │   ├── Openpose.py                # Stage 2: Pose detection
 │   └── results/                   # Pose frames saved here
-│
-├── img/
-│   └── 5_ratman/                  # Training images (53 images + .txt captions)
+├── train/
+│   ├── run_BLIP_caption.py                   # LoRA training — BLIP captioning
+│   ├── run_train.py               # LoRA training — kohya_ss launcher
+│   ├── img/
+│       └── 5_ratman/              # Training images (53 images + .txt captions)
 │
 ├── generated_frames/              # Stage 3 output
 ├── black_bg_frames/               # Stage 4 output
@@ -121,7 +121,7 @@ pip install diffusers transformers accelerate controlnet-aux
 pip install rembg imageio-ffmpeg pillow
 ```
 
-**Model files you need to supply** (not included in this repo due to size):
+**Model files** (not included in this repo due to size):
 - `M4RV3LSDUNGEONSNEWV40COMICS_mD40.safetensors` — base Stable Diffusion checkpoint
 - `Ratman_v1.safetensors` — trained LoRA output from `run_train.py`
 - `easynegative.safetensors` — textual inversion embedding
@@ -174,11 +174,16 @@ run_openpose()
 ### Step 3 — Run the main generation pipeline
 
 ```bash
-python main.py
+python image_gen.py
 ```
 
 This runs AnimateDiff + ControlNet inference in chunks of 16 frames, saving output to `generated_frames/`.
 
+```bash
+python image_gen_lineart.py
+```
+
+This runs AnimateDiff + ControlNet inference + Lineart inference in chunks of 16 frames, saving output to `generated_frames/`.
 ---
 
 ### Step 4 — Background removal (optional)
@@ -197,7 +202,7 @@ Runs BiRefNet with alpha matting. Output saved to `black_bg_frames/` and stitche
 python upscaler.py
 ```
 
-Runs the video-to-video pipeline at 1024x1024. Output saved to `upscaled_frames/` and stitched to video.
+Runs the video-to-video pipeline at 2048x2048. Output saved to `upscaled_frames/` and stitched to video.
 
 ---
 
@@ -209,8 +214,6 @@ Runs the video-to-video pipeline at 1024x1024. Output saved to `upscaled_frames/
 
 **LoRA fusion:** The character LoRA is fused into the pipeline weights before inference (`pipe.fuse_lora()`) rather than applied at runtime, which improves inference speed and ensures consistent weight application across all chunks.
 
-**Two-pass architecture:** The first pass (main.py) generates at 768x768 for speed. The second pass (upscaler.py) uses video-to-video at strength=0.35 — high enough to sharpen detail, low enough to preserve the motion from pass one.
-
 **BLIP captioning:** Rather than writing training captions by hand, BLIP generates a natural language description of each image automatically. A fixed prefix (`ratman, `) is prepended so the trigger word is always present in every caption.
 
 ---
@@ -221,7 +224,7 @@ Runs the video-to-video pipeline at 1024x1024. Output saved to `upscaled_frames/
 |---|---|---|
 | Generation (main.py) | 768x768 | 16 per chunk |
 | Upscale (upscaler.py) | 1024x1024 | 16 per chunk |
-| Final video | 1024x1024 | Full sequence @ 24fps |
+| Final video | 2048x2048 | Full sequence @ 24fps |
 
 ---
 
