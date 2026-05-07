@@ -7,6 +7,7 @@ from diffusers import (
     EulerDiscreteScheduler
 )
 from PIL import Image
+from PIL import ImageFilter, ImageEnhance
 import os
 import numpy as np
 from FFmpeg.FFmpeg_video_to_frames import get_frames
@@ -16,7 +17,7 @@ from Openpose.Openpose import run_openpose
 Height = 768
 Width = 768
 
-
+'''
 # Remove any previous images
 for f in os.listdir("FFmpeg/FFmpeg Images"):
     os.remove(os.path.join("FFmpeg/FFmpeg Images", f))
@@ -30,16 +31,19 @@ for f in os.listdir("upscaled_frames"):
 # Extract poses
 get_frames("FFmpeg/videos/input.mp4")
 run_openpose()
-
+'''
 
 print(torch.cuda.get_device_properties(0).total_memory / 1024**3)
 print(torch.version.cuda)
 
 # Prompts
 COMIC_PROMPT = """ratman, highly detailed, brown hooded cloak, yellow rat logo on chest, 
-face mask, glowing eyes, tactical belt, boots, cape, sharp lines"""
+face mask, glowing eyes, tactical belt, boots, cape, 
+ink outline, bold black outlines, sharp lines, hard edges, 
+cel shaded, comic book art, clean linework, crisp edges"""
 
-NEGATIVE_PROMPT = """easynegative, verybadimagenegative_v1.3, blurry, foggy"""
+NEGATIVE_PROMPT = """easynegative, verybadimagenegative_v1.3, blurry, foggy, 
+soft edges, smooth, painterly, airbrushed, out of focus, feathered edges"""
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -125,11 +129,18 @@ for chunk_idx, chunk in enumerate(chunks):
         width=Width, 
         height=Height, 
         num_inference_steps=20, 
-        guidance_scale=6.5,             
-        controlnet_conditioning_scale=1.5,
+        guidance_scale=8.0,             
+        controlnet_conditioning_scale=1.7,
         generator=generator
     )
     for frame in output.frames[0]:
+
+        frame = frame.filter(ImageFilter.SHARPEN)
+
+        
+        # Optionally boost contrast for more "inked" look
+        frame = ImageEnhance.Contrast(frame).enhance(1.3)
+
         output_path = f"generated_frames/ai_generated_frame_{frame_counter:04d}.png"
         frame.save(output_path)
         print(f"Saved frame {frame_counter}")
