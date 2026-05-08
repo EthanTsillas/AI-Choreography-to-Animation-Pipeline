@@ -9,7 +9,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 ## Demo
 
 ![Pipeline Output](output.gif)
-![Pipeline Output](output(1).gif)
+![Pipeline Output](output2.gif)
 
 ---
 
