@@ -6,13 +6,21 @@ from diffusers import (
     AutoencoderKL, 
     EulerDiscreteScheduler
 )
-from PIL import Image
-from PIL import ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter, ImageEnhance
 import os
 import numpy as np
+import gc
 from FFmpeg.FFmpeg_video_to_frames import get_frames
 from FFmpeg.FFmpeg_frames_to_video import get_video
 from Openpose.Openpose import run_openpose
+from background_remover import process_backgrounds
+from upscaler import batch_upscale
+
+# used to clear memory
+def clear_vram():
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
 
 Height = 768
 Width = 768
@@ -25,16 +33,17 @@ for f in os.listdir("Openpose/results"):
     os.remove(os.path.join("Openpose/results", f))
 for f in os.listdir("generated_frames"):
     os.remove(os.path.join("generated_frames", f))
-for f in os.listdir("upscaled_frames"):
-    os.remove(os.path.join("upscaled_frames", f))
-    
+for f in os.listdir("black_bg_frames"):
+    os.remove(os.path.join("black_bg_frames", f))
+for f in os.listdir("upscaled_images"):
+    os.remove(os.path.join("upscaled_images", f))
+
 # Extract poses
 get_frames("FFmpeg/videos/input.mp4")
 run_openpose()
 
-
-print(torch.cuda.get_device_properties(0).total_memory / 1024**3)
-print(torch.version.cuda)
+# clear memory for faster generation
+clear_vram()
 
 # Prompts
 COMIC_PROMPT = """ratman, highly detailed, brown hooded cloak, yellow rat logo on chest, 
@@ -145,5 +154,19 @@ for chunk_idx, chunk in enumerate(chunks):
         frame.save(output_path)
         print(f"Saved frame {frame_counter}")
         frame_counter += 1
-print(f"\nGenerated {frame_counter-1} frames")
-get_video("generated_frames")
+
+# clear memory for faster generation
+del pipe
+del controlnet
+del adapter
+
+clear_vram()
+
+process_backgrounds("generated_frames", "black_bg_frames")
+clear_vram()
+
+batch_upscale('black_bg_frames', 'upscaled_images', size=2048)
+get_video("upscaled_images")
+print(f"\nVideo has been generated")
+
+

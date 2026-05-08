@@ -8,7 +8,8 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 ## Demo
 
-![alt text](output.gif)
+![Pipeline Output](output.gif)
+![Pipeline Output](output(1).gif)
 
 ---
 
@@ -21,8 +22,8 @@ Input Video
     │
     ▼
 [1] FFmpeg — Frame Extraction & Preprocessing
-    Extract every frame, correct aspect ratio,
-    add zero bars if needed, LANCZOS resize to 768x768
+    Extract frames, correct aspect ratio,
+    add zero-padding bars if needed, LANCZOS resize to 768×768
     │
     ▼
 [2] OpenPose — Skeletal Pose Detection
@@ -32,42 +33,23 @@ Input Video
     ▼
 [3] AnimateDiff + ControlNet — Chunk Inference
     Feed pose frames into AnimateDiffControlNetPipeline
-    in chunks of 16 frames to fit 16GB VRAM.
+    in chunks of 16 frames to fit within 16GB VRAM.
     Custom LoRA fused into pipeline for character identity.
+    (Optional: use Lineart version for a different visual style)
     │
     ▼
 [4] BiRefNet — Background Removal
     High-precision segmentation with alpha matting
-    to cleanly isolate the character
+    to cleanly isolate the character on a black background
     │
     ▼
-[5] Video-to-Video Upscale
-    AnimateDiffVideoToVideoControlNetPipeline
-    refines frames from 768x768 to 1024x1024
+[5] Upscale Pass
+    LANCZOS upscale from 768×768 to 2048×2048
+    with high-quality resampling
     │
     ▼
-Output Animation (MP4)
+Output Animation (MP4 @ 24fps)
 ```
-
----
-
-## The Character Model — Custom LoRA Training
-
-The character (Ratman) is a custom LoRA trained from scratch specifically for this pipeline.
-
-**Training setup:**
-- **Dataset:** 53 hand-curated character images
-- **Captioning:** Automated via BLIP (`Salesforce/blip-image-captioning-base`) — no manual captions written
-- **Base model:** `runwayml/stable-diffusion-v1-5`
-- **Training script:** `kohya_ss` (`train_network.py`)
-- **Optimizer:** AdamW8bit
-- **LR Scheduler:** Cosine
-- **Mixed precision:** fp16
-- **Network dim / alpha:** 64 / 32
-- **Resolution:** 768x768 with bucket sizing
-- **Epochs:** 10
-
-The trained LoRA is fused directly into the AnimateDiff pipeline before inference so the character identity is locked across every generated frame without per-frame prompting.
 
 ---
 
@@ -75,165 +57,197 @@ The trained LoRA is fused directly into the AnimateDiff pipeline before inferenc
 
 ```
 /
-├── image_gen.py                   # Stage 3: AnimateDiff + ControlNet inference
-├── image_gen_lineart.py           # Stage 3: AnimateDiff + ControlNet inference + Lineart inference
-├── upscaler.py                    # Stage 5: Video-to-video upscale pass
-├── background_remover.py          # Stage 4: BiRefNet background removal
+├── image_gen.py                        # Stage 3: AnimateDiff + ControlNet (OpenPose only)
+├── image_gen_lineart.py                # Stage 3: AnimateDiff + ControlNet + Lineart
+├── lineart.py                          # Lineart frame extraction helper
+├── upscaler.py                         # Stage 5: LANCZOS batch upscale to 2048×2048
+├── background_remover.py               # Stage 4: BiRefNet background removal
 │
 ├── FFmpeg/
-│   ├── FFmpeg_video_to_frames.py  # Stage 1: Frame extraction + preprocessing
-│   ├── FFmpeg_frames_to_video.py  # Final: Stitch frames back to MP4
-│   └── videos/
-│       └── input.mp4              # Your input video goes here
+│   ├── FFmpeg_video_to_frames.py       # Stage 1: Frame extraction + preprocessing
+│   └── FFmpeg_frames_to_video.py       # Final: Stitch frames back to MP4 @ 24fps
 │
 ├── Openpose/
-│   ├── Openpose.py                # Stage 2: Pose detection
-│   └── results/                   # Pose frames saved here
-├── train/
-│   ├── run_BLIP_caption.py                   # LoRA training — BLIP captioning
-│   ├── run_train.py               # LoRA training — kohya_ss launcher
-│   ├── img/
-│       └── 5_ratman/              # Training images (53 images + .txt captions)
+│   └── Openpose.py                     # Stage 2: Pose detection, saves pose_frame_XXXX.png
 │
-├── generated_frames/              # Stage 3 output
-├── black_bg_frames/               # Stage 4 output
-├── upscaled_frames/               # Stage 5 output
-└── videos/
-    └── output.mp4                 # Final video
+├── train/
+│   ├── run_BLIP_caption.py             # Auto-caption training images via BLIP
+│   └── run_train.py                    # Launch LoRA training via kohya_ss
+│
+├── FFmpeg/FFmpeg Images/               # Stage 1 output: extracted source frames
+├── Openpose/results/                   # Stage 2 output: pose skeleton frames
+├── lineart_frames/                     # Lineart output (if using image_gen_lineart.py)
+├── generated_frames/                   # Stage 3 output: AI-generated frames
+├── black_bg_frames/                    # Stage 4 output: background-removed frames
+├── videos/
+│   ├── input.mp4                       # Your input video goes here
+│   └── output.mp4                      # Final rendered video
+│
+└── img/
+    └── 5_ratman/                       # Training images + auto-generated .txt captions
 ```
 
 ---
 
 ## Requirements
 
-**Hardware:**
-- NVIDIA GPU with 16GB+ VRAM (tested on RTX 4080 / 4090)
+### Hardware
+- NVIDIA GPU with **16GB+ VRAM** (tested on RTX 5070 Ti)
 - CUDA 12.x
 
-**External dependencies:**
-- [FFmpeg](https://ffmpeg.org/download.html) installed and on PATH
-- [kohya_ss sd-scripts](https://github.com/kohya-ss/sd-scripts) cloned to `sd-scripts/`
+### External Dependencies
+- [FFmpeg](https://ffmpeg.org/download.html) — must be installed and on `PATH`
+- [kohya_ss sd-scripts](https://github.com/kohya-ss/sd-scripts) — cloned to `sd-scripts/` for LoRA training
 
-**Python packages:**
+### Python Packages
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 pip install diffusers transformers accelerate controlnet-aux
 pip install rembg imageio-ffmpeg pillow
 ```
 
-**Model files** (not included in this repo due to size):
-- `M4RV3LSDUNGEONSNEWV40COMICS_mD40.safetensors` — base Stable Diffusion checkpoint
-- `Ratman_v1.safetensors` — trained LoRA output from `run_train.py`
-- `easynegative.safetensors` — textual inversion embedding
-- `verybadimagenegative_v1.3.pt` — textual inversion embedding
+### Model Files *(not included — download separately)*
+| File | Purpose |
+|---|---|
+| `M4RV3LSDUNGEONSNEWV40COMICS_mD40.safetensors` | Base Stable Diffusion checkpoint |
+| `Ratman_v1.safetensors` | Custom character LoRA (output of `run_train.py`) |
+| `easynegative.safetensors` | Negative textual inversion embedding |
+| `verybadimagenegative_v1.3.pt` | Negative textual inversion embedding |
 
 ---
 
 ## Usage
 
-### Step 1 — Train your character LoRA
+### Step 1 — Train Your Character LoRA
 
-Place your character images in `img/your_character/` then run BLIP captioning:
+If you want to use a custom character, place your training images in `img/your_character/` then run BLIP captioning to auto-generate `.txt` caption files:
 
 ```bash
-python train.py
+python train/run_BLIP_caption.py
 ```
 
-This auto-generates a `.txt` caption file next to every image.
+A `ratman, ` trigger-word prefix is prepended to every caption automatically. Update the `PREFIX` and `IMAGE_FOLDER` variables in `run_BLIP_caption.py` for your own character.
 
 Then launch LoRA training:
 
 ```bash
-python run_train.py
+python train/run_train.py
 ```
 
 Output: `model/Ratman_v1.safetensors`
 
 ---
 
-### Step 2 — Prepare your input video
+### Step 2 — Prepare Your Input Video
 
-Place your video at `FFmpeg/videos/input.mp4`.
-
-Then extract and preprocess frames (run once):
+Place your video at `FFmpeg/videos/input.mp4`, then extract and preprocess frames:
 
 ```python
 from FFmpeg.FFmpeg_video_to_frames import get_frames
 get_frames("FFmpeg/videos/input.mp4")
 ```
 
-Then run OpenPose:
+Then run OpenPose to extract body keypoints from each frame:
 
 ```python
 from Openpose.Openpose import run_openpose
 run_openpose()
 ```
 
+Pose frames are saved to `Openpose/results/`.
+
 ---
 
-### Step 3 — Run the main generation pipeline
+### Step 3 — Run the Main Generation Pipeline
 
+**OpenPose-only (standard):**
 ```bash
 python image_gen.py
 ```
 
-This runs AnimateDiff + ControlNet inference in chunks of 16 frames, saving output to `generated_frames/`.
-
+**OpenPose + Lineart (alternate style):**
 ```bash
 python image_gen_lineart.py
 ```
 
-This runs AnimateDiff + ControlNet inference + Lineart inference in chunks of 16 frames, saving output to `generated_frames/`.
+Both run AnimateDiff + ControlNet inference in chunks of 16 frames, saving output to `generated_frames/`. The Lineart variant additionally runs `lineart.py` to extract edge maps and feeds them as a second conditioning signal.
+
 ---
 
-### Step 4 — Background removal (optional)
+### Step 4 — Background Removal *(optional)*
 
 ```bash
 python background_remover.py
 ```
 
-Runs BiRefNet with alpha matting. Output saved to `black_bg_frames/` and stitched to video automatically.
+Runs BiRefNet (`birefnet-general`) with alpha matting and `post_process_mask`. Output frames are composited onto a black background and saved to `black_bg_frames/`, then automatically stitched to video.
 
 ---
 
-### Step 5 — Upscale pass
+### Step 5 — Upscale Pass
 
 ```bash
 python upscaler.py
 ```
 
-Runs the video-to-video pipeline at 2048x2048. Output saved to `upscaled_frames/` and stitched to video.
+Batch-upscales all frames to 2048×2048 using LANCZOS resampling (saved at 95% JPEG quality). Output frames are saved to `upscaled_frames/` and stitched to a final MP4.
 
 ---
 
 ## Key Technical Details
 
-**16-frame chunking:** AnimateDiff generates temporally consistent motion within a chunk. Processing in chunks of 16 is required to fit within 16GB VRAM while maintaining motion coherence.
+**16-frame chunking** — AnimateDiff generates temporally consistent motion within a chunk of 16 frames. Processing in fixed 16-frame windows is required to stay within 16GB VRAM while maintaining motion coherence across the sequence.
 
-**VAE slicing and tiling:** Enabled on the VAE to handle 768x768 and 1024x1024 resolutions without OOM errors on consumer GPUs.
+**VAE slicing and tiling** — Enabled on the VAE decoder to handle 768×768 and 1024×1024 generation resolutions without out-of-memory errors on consumer GPUs.
 
-**LoRA fusion:** The character LoRA is fused into the pipeline weights before inference (`pipe.fuse_lora()`) rather than applied at runtime, which improves inference speed and ensures consistent weight application across all chunks.
+**LoRA fusion** — The character LoRA is fused into the pipeline weights before inference (`pipe.fuse_lora()`) rather than applied at runtime. This improves inference speed and ensures consistent character identity across all chunks without per-chunk re-application.
 
-**BLIP captioning:** Rather than writing training captions by hand, BLIP generates a natural language description of each image automatically. A fixed prefix (`ratman, `) is prepended so the trigger word is always present in every caption.
+**BLIP captioning** — Instead of writing training captions by hand, `run_BLIP_caption.py` uses `Salesforce/blip-image-captioning-base` to auto-generate a natural language description for every training image. A fixed trigger-word prefix is prepended so the character token appears in every caption.
+
+**VRAM cleanup** — `clear_vram()` (gc + `torch.cuda.empty_cache()` + `torch.cuda.ipc_collect()`) is called between pipeline stages to free fragmented memory before loading the next model.
 
 ---
 
-## Results
+## Output Summary
 
-| Stage | Resolution | Frames |
-|---|---|---|
-| Generation (main.py) | 768x768 | 16 per chunk |
-| Upscale (upscaler.py) | 1024x1024 | 16 per chunk |
-| Final video | 2048x2048 | Full sequence @ 24fps |
+| Stage | Script | Resolution | Notes |
+|---|---|---|---|
+| Frame Extraction | `FFmpeg_video_to_frames.py` | Source → 768×768 | LANCZOS resize, zero-bar padding |
+| Pose Detection | `Openpose.py` | 768×768 | lllyasviel/ControlNet |
+| Generation | `image_gen.py` | 768×768 | 16 frames/chunk |
+| Generation (Lineart) | `image_gen_lineart.py` | 768×768 | 16 frames/chunk + lineart conditioning |
+| Background Removal | `background_remover.py` | 768×768 | BiRefNet + alpha matting |
+| Upscale | `upscaler.py` | 2048×2048 | LANCZOS, 95% quality |
+| Final Video | `FFmpeg_frames_to_video.py` | 2048×2048 | 24fps, H.264, yuv420p |
+
+---
+
+## The Character Model — Custom LoRA Training
+
+The example character (Ratman) is a custom LoRA trained from scratch for this pipeline.
+
+| Parameter | Value |
+|---|---|
+| Dataset | 53 hand-curated character images |
+| Captioning | Automated via BLIP (`Salesforce/blip-image-captioning-base`) |
+| Base model | `runwayml/stable-diffusion-v1-5` |
+| Training script | `kohya_ss` — `train_network.py` |
+| Optimizer | AdamW8bit |
+| LR Scheduler | Cosine |
+| Mixed precision | fp16 |
+| Network dim / alpha | 64 / 32 |
+| Resolution | 768×768 with bucket sizing |
+| Epochs | 10 |
 
 ---
 
 ## Built With
 
-- [Diffusers](https://github.com/huggingface/diffusers) — AnimateDiff, ControlNet, pipeline management
-- [kohya_ss](https://github.com/kohya-ss/sd-scripts) — LoRA training
+- [Diffusers](https://github.com/huggingface/diffusers) — AnimateDiff, ControlNet, pipeline orchestration
+- [kohya_ss sd-scripts](https://github.com/kohya-ss/sd-scripts) — LoRA training
 - [BLIP](https://huggingface.co/Salesforce/blip-image-captioning-base) — automated image captioning
 - [ControlNet OpenPose](https://huggingface.co/lllyasviel/control_v11p_sd15_openpose) — skeleton detection
+- [ControlNet Lineart](https://huggingface.co/lllyasviel/Annotators) — lineart edge detection
 - [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) via rembg — background removal
 - [FFmpeg](https://ffmpeg.org) — frame extraction and video assembly
 
@@ -242,5 +256,5 @@ Runs the video-to-video pipeline at 2048x2048. Output saved to `upscaled_frames/
 ## Author
 
 **Ethan Tsillas**  
-github.com/EthanTsillas  
-linkedin.com/in/ethan-tsillas
+[github.com/EthanTsillas](https://github.com/EthanTsillas)  
+[linkedin.com/in/ethan-tsillas](https://www.linkedin.com/in/ethan-tsillas-857346399/)

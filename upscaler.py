@@ -38,5 +38,4 @@ if __name__ == "__main__":
     # ---------------------
 
     batch_upscale(source_dir, target_dir)
-    get_video(target_dir)
     print("\nProcessing complete!")

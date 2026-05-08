@@ -3,7 +3,7 @@ from PIL import Image
 import os
 
 def run_openpose():
-    detector = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")  
+    detector = OpenposeDetector.from_pretrained("lllyasviel/ControlNet").to("cuda")
 
     input_folder = "FFmpeg/FFmpeg Images"
     output_folder = "Openpose/results/"

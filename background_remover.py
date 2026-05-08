@@ -2,10 +2,9 @@ import os
 import torch
 from PIL import Image, ImageFilter
 from rembg import remove, new_session
-from FFmpeg.FFmpeg_frames_to_video import get_video
 
 
-def process_backgrounds_v2(input_folder, output_folder):
+def process_backgrounds(input_folder, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -32,9 +31,7 @@ def process_backgrounds_v2(input_folder, output_folder):
 
         black_bg.save(os.path.join(output_folder, filename))
         print(f"Processed {filename}")
-        
-    get_video("black_bg_frames")
 
 
 if __name__ == "__main__":
-    process_backgrounds_v2("generated_frames", "black_bg_frames")
+    process_backgrounds("generated_frames", "black_bg_frames")
