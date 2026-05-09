@@ -9,9 +9,15 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 ## Pipeline Results
 
-| Input Video | Output (No Lineart) | Output (With Lineart) |
+| Input Video | Pose Skeleton | Lineart Outline | Output (With Lineart) |
+| :---: | :---: | :---: | :---: |
+| ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![Lineart Outline](lineart_outline.gif) | ![Lineart](lineart.gif) |
+
+| Input Video | Pose Skeleton | Lineart Outline | Output (No Lineart) | 
 | :---: | :---: | :---: |
-| ![Input Video](input.gif) | ![No Lineart](nolineart.gif) | ![Lineart](lineart.gif) |
+| ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![No Lineart](nolineart.gif) |
+
+
 ---
 
 ## How It Works
