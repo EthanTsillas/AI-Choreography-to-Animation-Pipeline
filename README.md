@@ -11,7 +11,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 
 
-| Input Video | Pose Skeleton | Lineart Outline | Output (No Lineart) | 
+| Input Video | Pose Skeleton | Output (No Lineart) | 
 | :---: | :---: | :---: |
 | ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![No Lineart](nolineart.gif) |
 ---
