@@ -18,6 +18,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 | Input Video | Pose Skeleton | Lineart Outline | Output (With Lineart) |
 | :---: | :---: | :---: | :---: |
 | ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![Lineart Outline](lineart_outline.gif) | ![Lineart](lineart.gif) |
+**Source Script:** [`image_gen_with_lineart.py`](./image_gen_with_lineart.py)
 ---
 
 
