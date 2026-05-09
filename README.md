@@ -27,8 +27,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
       <b>Source Script:</b> <code>image_gen.py</code>
     </td>
   </tr>
-</table>
-</table>
+</table>  
 <table align="center">
   <tr>
     <th align="center">Input Video</th>
