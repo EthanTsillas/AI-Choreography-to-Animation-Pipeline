@@ -84,4 +84,4 @@ def square_and_resize(input_dir, output_dir, size=768):
     print(f"✅ Frames perfectly squared to {size}x{size} (Zero top/bottom bars)")
 
 if __name__ == "__main__":
-    get_frames("FFmpeg/videos/input.mp4")
+    get_frames("../videos/PXL_20260403_145338158~2.mp4")

@@ -6,11 +6,12 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 ---
 
-## Demo
 
-![Pipeline Output](output.gif)
-![Pipeline Output](output2.gif)
+## Pipeline Results
 
+| Input Video | Output (No Lineart) | Output (With Lineart) |
+| :---: | :---: | :---: |
+| ![Input Video](input.gif) | ![No Lineart](nolineart.gif) | ![Lineart](lineart.gif) |
 ---
 
 ## How It Works

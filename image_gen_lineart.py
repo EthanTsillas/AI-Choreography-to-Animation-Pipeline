@@ -43,7 +43,7 @@ for f in os.listdir("upscaled_images"):
     os.remove(os.path.join("upscaled_images", f))
     
 # Extract poses
-get_frames("FFmpeg/videos/input.mp4")
+get_frames("videos/dance.mp4")
 run_openpose()
 
 # clear memory for faster generation
@@ -55,10 +55,11 @@ clear_vram()
 
 
 # Prompts
-COMIC_PROMPT = """ratman, highly detailed, brown hooded cloak, yellow rat logo on chest, 
-face mask, glowing eyes, tactical belt, boots, cape, 
+# Update your COMIC_PROMPT:
+COMIC_PROMPT = """ratman, highly detailed, symmetrical glowing eyes, centered mask, 
+brown hooded cloak, yellow rat logo on chest, face mask, tactical belt, boots, cape, 
 ink outline, bold black outlines, sharp lines, hard edges, 
-cel shaded, comic book art, clean linework, crisp edges"""
+cel shaded, comic book art, clean linework, crisp edges, masterpiece, 8k"""
 
 NEGATIVE_PROMPT = """easynegative, verybadimagenegative_v1.3, blurry, foggy, 
 soft edges, smooth, painterly, airbrushed, out of focus, feathered edges"""
@@ -157,7 +158,7 @@ for chunk_idx, chunk in enumerate(chunks):
         prompt=COMIC_PROMPT,
         negative_prompt=NEGATIVE_PROMPT,
         conditioning_frames=[conditioning_frames_pose, conditioning_frames_lineart],
-        controlnet_conditioning_scale=[1.2, 0.4],  # pose strong, lineart moderate
+        controlnet_conditioning_scale=[0.9, 0.4],  # pose strong, lineart moderate
         num_frames=len(pose_chunk),
         width=Width,
         height=Height,
