@@ -15,10 +15,25 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 | :---: | :---: | :---: |
 | ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![No Lineart](nolineart.gif) |
 ---
-| Input Video | Pose Skeleton | Lineart Outline | Output (With Lineart) |
-| :---: | :---: | :---: | :---: |
-| ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![Lineart Outline](lineart_outline.gif) | ![Lineart](lineart.gif) |
-**Source Script:** [`image_gen_with_lineart.py`](./image_gen_with_lineart.py)
+<table align="center">
+  <tr>
+    <th align="center">Input Video</th>
+    <th align="center">Pose Skeleton</th>
+    <th align="center">Lineart Outline</th>
+    <th align="center">Output (With Lineart)</th>
+  </tr>
+  <tr>
+    <td><img src="input.gif"></td>
+    <td><img src="pose.gif"></td>
+    <td><img src="lineart_outline.gif"></td>
+    <td><img src="lineart.gif"></td>
+  </tr>
+  <tr>
+    <td colspan="4" align="center">
+      <b>Source Script:</b> <code>image_gen_with_lineart.py</code>
+    </td>
+  </tr>
+</table>
 ---
 
 
