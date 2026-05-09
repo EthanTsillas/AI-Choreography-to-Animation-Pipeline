@@ -11,9 +11,23 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
 
 
 
-| Input Video | Pose Skeleton | Output (No Lineart) | 
-| :---: | :---: | :---: |
-| ![Input Video](input.gif) | ![Pose Skeleton](pose.gif) | ![No Lineart](nolineart.gif) |
+<table align="center">
+  <tr>
+    <th align="center">Input Video</th>
+    <th align="center">Pose Skeleton</th>
+    <th align="center">Output (No Lineart)</th>
+  </tr>
+  <tr>
+    <td><img src="input.gif"></td>
+    <td><img src="pose.gif"></td>
+    <td><img src="nolineart.gif"></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center">
+      <b>Source Script:</b> <code>image_gen.py</code>
+    </td>
+  </tr>
+</table>
 ---
 <table align="center">
   <tr>
