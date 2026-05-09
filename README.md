@@ -28,6 +28,7 @@ Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-tra
     </td>
   </tr>
 </table>  
+  
 <table align="center">
   <tr>
     <th align="center">Input Video</th>
