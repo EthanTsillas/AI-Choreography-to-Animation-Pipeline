@@ -109,7 +109,9 @@ Output Animation (MP4 @ 24fps)
 │
 ├── train/
 │   ├── run_BLIP_caption.py             # Auto-caption training images via BLIP
-│   └── run_train.py                    # Launch LoRA training via kohya_ss
+│   ├── run_train.py                    # Launch LoRA training via kohya_ss
+│   └──img/
+│      └── 5_ratman/                    # Training images + auto-generated .txt captions
 │
 ├── FFmpeg/FFmpeg Images/               # Stage 1 output: extracted source frames
 ├── Openpose/results/                   # Stage 2 output: pose skeleton frames
@@ -120,8 +122,7 @@ Output Animation (MP4 @ 24fps)
 │   ├── input.mp4                       # Your input video goes here
 │   └── output.mp4                      # Final rendered video
 │
-└── img/
-    └── 5_ratman/                       # Training images + auto-generated .txt captions
+└── 
 ```
 
 ---
