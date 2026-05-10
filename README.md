@@ -3,7 +3,8 @@
 Convert a video of real human movement into a stylized AI-generated animation — automatically, end to end, with no per-frame manual input.
 
 Built as a UCF Senior Design project using AnimateDiff, ControlNet, a custom-trained LoRA character model, and BiRefNet background removal.
-
+ 
+![Character inspiration](ratman_wide_stance.png)
 ---
 
 
