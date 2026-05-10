@@ -235,7 +235,7 @@ Batch-upscales all frames to 2048×2048 using LANCZOS resampling (saved at 95% J
 
 **16-frame chunking** — AnimateDiff generates temporally consistent motion within a chunk of 16 frames. Processing in fixed 16-frame windows is required to stay within 16GB VRAM while maintaining motion coherence across the sequence.
 
-**VAE slicing and tiling** — Enabled on the VAE decoder to handle 768×768 and 1024×1024 generation resolutions without out-of-memory errors on consumer GPUs.
+**VAE slicing and tiling** — Enabled on the VAE decoder to handle 768×768 generation resolutions without out-of-memory errors on consumer GPUs.
 
 **LoRA fusion** — The character LoRA is fused into the pipeline weights before inference (`pipe.fuse_lora()`) rather than applied at runtime. This improves inference speed and ensures consistent character identity across all chunks without per-chunk re-application.
 
